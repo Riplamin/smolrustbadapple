@@ -1,4 +1,5 @@
 ﻿using BadAppleTools.Library.Frame;
+using BadAppleTools.Library.Video;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
@@ -15,74 +16,65 @@ namespace BadAppleTools.WinFormsPOC
 {
     public partial class DisplayTestForm : Form
     {
-        private FrameRenderer frameRenderer;
-
-        private static int WIDTH = 100, HEIGHT = 100;
-
-        int totalLength = WIDTH * HEIGHT;
-
-        int refreshMillis = 1000 / 15; // 16fps
-        System.Windows.Forms.Timer refreshTimer;
+        Video? generatedVideo;
+        private FrameRenderer? frameRenderer;
+        private VideoFramePresenter? videoFramePresenter;
+        private VideoPlayer? videoPlayer;
 
         public DisplayTestForm()
         {
             InitializeComponent();
         }
 
-        private void DisplayTestForm_Load(object sender, EventArgs e)
+        private void GenerateVideoButton_Click(object sender, EventArgs e)
         {
-            frameRenderer = new FrameRenderer(WIDTH, HEIGHT);
+            var videoGenerator = new VideoGenerator();
+            generatedVideo = videoGenerator.Generate();
 
-            FrameRendererControl.SetFrameRenderer(frameRenderer);
-
-            refreshTimer = new System.Windows.Forms.Timer();
-            refreshTimer.Tick += RefreshTimer_Tick;
-            refreshTimer.Interval = refreshMillis;
-        }
-
-        private void StartButton_Click(object sender, EventArgs e)
-        {
-            refreshTimer.Start();
-            StartButton.Enabled = false;
-        }
-
-        private void RefreshTimer_Tick(object? sender, EventArgs e)
-        {
-            GenerateRandomFrame();
-            FrameRendererControl.DrawFrame();
-        }
-
-        private void GenerateRandomFrame()
-        {
-            var frameSections = new List<FrameSection>();
-
-            int filledLength = 0;
-            var rng = new Random(DateTime.Now.Millisecond);
-
-            var orientation = (Orientations)rng.Next(0, Enum.GetValues(typeof(Orientations)).Length);
-
-            int sectionLength;
-            Shades shade;
-            do
+            if (generatedVideo?.Manifest != null && generatedVideo?.Frames != null)
             {
-                sectionLength = Math.Min(rng.Next(5, 20), totalLength - filledLength);
-                shade = (Shades)rng.Next(0, Enum.GetValues(typeof(Shades)).Length);
+                frameRenderer = new FrameRenderer(
+                    generatedVideo.Manifest.Width,
+                    generatedVideo.Manifest.Height);
 
-                frameSections.Add(
-                    new()
-                    {
-                        Length = sectionLength,
-                        Shade = shade
-                    });
+                FrameRendererControl.SetFrameRenderer(frameRenderer);
+                videoFramePresenter = new VideoFramePresenter(frameRenderer, FrameRendererControl);
 
-                filledLength += sectionLength;
+                UpdateLabels();
+
+                PlayButton.Enabled = true;
             }
-            while (filledLength < totalLength);
 
-            frameRenderer.SetFrameData(
-                new FrameData(
-                    orientation,
-                    frameSections));
+            GenerateVideoButton.Enabled = false;
+        }
+
+        private void UpdateLabels()
+        {
+            if (generatedVideo?.Manifest == null || generatedVideo?.Frames == null)
+                return;
+
+            FramesPerSecondLabel.Text =
+                            FramesPerSecondLabel.Text.Replace("...", generatedVideo.Manifest.FramesPerSecond.ToString());
+
+            WidthLabel.Text =
+                WidthLabel.Text.Replace("...", generatedVideo.Manifest.Width.ToString());
+
+            HeightLabel.Text =
+                HeightLabel.Text.Replace("...", generatedVideo.Manifest.Height.ToString());
+
+            FrameCountLabel.Text =
+                FrameCountLabel.Text.Replace("...", generatedVideo.Frames.Length.ToString());
+        }
+
+        private void PlayButton_Click(object sender, EventArgs e)
+        {
+            if (generatedVideo == null || videoFramePresenter == null)
+                return;
+
+            videoPlayer = new VideoPlayer(generatedVideo, videoFramePresenter);
+            videoPlayer.PlayVideoAsync();
+
+            PlayButton.Enabled = false;
         }
     }
 }

@@ -9,9 +9,9 @@ namespace BadAppleTools.Library.Frame
         private static Dictionary<Shades, ShadeRange>
             shadeRanges = new Dictionary<Shades, ShadeRange>()
             {
-                { Shades.Black, new ShadeRange { MinimumValue = 0.0f, MaximumValue = 0.2f } },
-                { Shades.Gray,  new ShadeRange { MinimumValue = 0.2f, MaximumValue = 0.8f } },
-                { Shades.White, new ShadeRange { MinimumValue = 0.8f, MaximumValue = 1.0f } },
+                { Shades.Black, new ShadeRange { MinimumValue = 0.0f,  MaximumValue = 0.28f } },
+                { Shades.Gray,  new ShadeRange { MinimumValue = 0.28f, MaximumValue = 0.3f } },
+                { Shades.White, new ShadeRange { MinimumValue = 0.3f,  MaximumValue = 1.0f } },
             };
 
         private static Shades GetShadeFromIntensity(float intensity)

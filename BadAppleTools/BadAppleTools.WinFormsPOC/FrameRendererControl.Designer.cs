@@ -36,6 +36,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.DoubleBuffered = true;
             this.Name = "FrameRendererControl";
+            this.Load += new System.EventHandler(this.FrameRendererControl_Load);
             this.Paint += new System.Windows.Forms.PaintEventHandler(this.FrameRendererControl_Paint);
             this.ResumeLayout(false);
 
