@@ -16,7 +16,7 @@ namespace BadAppleTools.Library.Frame
         private static Dictionary<Shades, float>
             shadeIntensities = new Dictionary<Shades, float>() {
                 { Shades.Black, 0.0f },
-                { Shades.Gray,  0.6f },
+                { Shades.Gray,  0.29f },
                 { Shades.White, 1.0f }
             };
 

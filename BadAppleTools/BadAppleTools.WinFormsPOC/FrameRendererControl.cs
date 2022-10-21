@@ -12,26 +12,49 @@ using System.Windows.Forms;
 
 namespace BadAppleTools.WinFormsPOC
 {
-    public partial class FrameRendererControl : UserControl
+    public partial class FrameRendererControl : UserControl, IRenderedFrameUpdate
     {
         private FrameRenderer? frameRenderer;
         private float[,]? renderBuffer;
 
         private bool isTransparent = false;
 
+        private object frameUpdateLock = new();
+        private bool frameAvailable = false;
+
+        private System.Windows.Forms.Timer frameUpdateTimer;
+
         public FrameRendererControl()
         {
             InitializeComponent();
+
+        }
+
+        private void FrameRendererControl_Load(object sender, EventArgs e)
+        {
+            frameUpdateTimer = new System.Windows.Forms.Timer();
+            frameUpdateTimer.Interval = 1000 / 120; // 144fps update
+            frameUpdateTimer.Tick += FrameUpdateTimer_Tick;
+            frameUpdateTimer.Start();
         }
 
         public void SetFrameRenderer(FrameRenderer frameRenderer) =>
             this.frameRenderer = frameRenderer;
 
+        private void FrameUpdateTimer_Tick(object? sender, EventArgs e)
+        {
+            lock (frameUpdateLock)
+            {
+                if (frameAvailable)
+                    DrawFrame();
+
+                frameAvailable = false;
+            }
+        }
+
         public void DrawFrame()
         {
-            frameRenderer?.RenderToBuffer();
             renderBuffer = frameRenderer?.GetRenderBuffer();
-
             Refresh();
         }
 
@@ -46,7 +69,7 @@ namespace BadAppleTools.WinFormsPOC
                 }
                 return;
             }
-            
+
             if (!isTransparent)
             {
                 BackColor = Color.Transparent;
@@ -74,6 +97,14 @@ namespace BadAppleTools.WinFormsPOC
                 }
 
                 e.Graphics.DrawImageUnscaled(image, Point.Empty);
+            }
+        }
+
+        public void NewFrameRendered()
+        {
+            lock (frameUpdateLock)
+            {
+                frameAvailable = true;
             }
         }
     }
